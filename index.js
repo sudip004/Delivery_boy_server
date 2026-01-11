@@ -29,7 +29,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); //  REQUIRED
+app.options( cors(corsOptions)); //  REQUIRED
 
 
 
