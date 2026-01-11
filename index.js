@@ -15,17 +15,22 @@ const {authMiddleware} = require("./middlewares/Auth")
 
 // middleware
 app.use(express.json())
-app.use(cors({
-    origin: [
-        "http://localhost:5173",
-        "http://localhost:3000",
-        process.env.RIDER_CLIENT_URL,
-        process.env.CLIENT_URL
-    ],
-    credentials: true
-}));
+
 
 app.use(cookieParser())
+
+const corsOptions = {
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://nimble-pithivier-8f2280.netlify.app"
+  ],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); //  REQUIRED
+
 
 
 // ===========================================
