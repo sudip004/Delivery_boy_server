@@ -282,11 +282,17 @@ app.patch("/boyupdatestatus/:boyId", async (req, res) => {
 
 
 
-app.listen(PORT, () => {
-    dbConnect()
-    console.log("App is running  " + PORT);
+dbConnect()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log("Server running on port " + PORT);
+    });
+  })
+  .catch((err) => {
+    console.error("MongoDB connection failed", err);
+    process.exit(1);
+  });
 
-})
 
 
 
