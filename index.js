@@ -3,6 +3,8 @@ dotenv.config()
 const express = require('express')
 const app = express();
 const cors = require('cors')
+const compression = require('compression');
+const helmet = require('helmet');
 const jwt = require('jsonwebtoken');
 const cookieParser = require("cookie-parser");
 const { dbConnect } = require('./db');
@@ -10,19 +12,33 @@ const PORT = process.env.PORT || 5000
 
 const { deliveryModel } = require("./model/Delivery_boys")
 const { orderModel } = require("./model/Orders");
-const { default: axios } = require('axios');
 const {authMiddleware} = require("./middlewares/Auth")
 
 // middleware
-app.use(express.json())
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
+
+app.use(helmet({
+    crossOriginResourcePolicy: false
+}));
+app.use(compression());
+app.use(express.json({ limit: '1mb' }));
+
+const allowedOrigins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    process.env.RIDER_CLIENT_URL,
+    process.env.CLIENT_URL
+].filter(Boolean);
+
 app.use(cors({
-    origin: [
-        "http://localhost:5173",
-        "http://localhost:3000",
-        process.env.RIDER_CLIENT_URL,
-        process.env.CLIENT_URL
-    ],
-    credentials: true
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    optionsSuccessStatus: 200
 }));
 
 app.use(cookieParser())
@@ -33,24 +49,45 @@ app.use(cookieParser())
 //========================================
 
 app.post('/delivery-signup', async (req, res) => {
-    const { name, email, password, phone, vehicleNumber, isActive, currentLocation, orders } = req.body
+    try {
+        let { name, email, password, phone, vehicleNumber, isActive, currentLocation, orders } = req.body
 
-    if (!name || !email || !password || !phone || !vehicleNumber) {
-        return res.status(400).json({ message: "All fields required" });
+        if (email) {
+            email = String(email).toLowerCase().trim();
+        }
+
+        if (!name || !email || !password || !phone || !vehicleNumber) {
+            return res.status(400).json({ message: "All fields required" });
+        }
+
+        // Check if delivery boy already exists by email or phone
+        const existingDeliveryBoy = await deliveryModel.findOne({
+            $or: [{ email }, { phone }]
+        });
+
+        if (existingDeliveryBoy) {
+            if (existingDeliveryBoy.email === email) {
+                return res.status(400).json({ message: "Email already registered" });
+            }
+            if (existingDeliveryBoy.phone === phone) {
+                return res.status(400).json({ message: "Phone number already registered" });
+            }
+        }
+
+        const deliveryBoy = await deliveryModel.create({
+            name,
+            email,
+            phone,
+            vehicleNumber,
+            password,
+        });
+
+        res.status(201).json({ message: "User Register Successfully", user: { id: deliveryBoy._id, email: deliveryBoy.email } })
+
+    } catch (error) {
+        console.error("Signup error:", error.message);
+        res.status(500).json({ message: "Server error during signup" });
     }
-
-    const deliveryBoy = await deliveryModel.create({
-        name,
-        email,
-        phone,
-        vehicleNumber,
-        password,
-    });
-    
-
-    res.status(201).json("User Register Successfully")
-
-
 })
 
 
@@ -63,7 +100,11 @@ const generateToken = (payload) => {
 
 app.post("/login", async (req, res) => {
     try {
-        const { email, password } = req.body;
+        let { email, password } = req.body;
+
+        if (email) {
+            email = String(email).toLowerCase().trim();
+        }
 
         const user = await deliveryModel.findOne({ email });
 
@@ -277,11 +318,19 @@ app.patch("/boyupdatestatus/:boyId", async (req, res) => {
 
 
 
-app.listen(PORT, () => {
-    dbConnect()
-    console.log("App is running  " + PORT);
+const startServer = async () => {
+    try {
+        await dbConnect();
+        app.listen(PORT, () => {
+            console.log("App is running  " + PORT);
+        });
+    } catch (error) {
+        console.error("Failed to start server:", error.message);
+        process.exit(1);
+    }
+};
 
-})
+startServer();
 
 
 

@@ -81,9 +81,14 @@ const OrderSchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: false // you already manage orderDate
+    timestamps: false, // you already manage orderDate
+    minimize: false
   }
 );
+
+// Indexes for faster queries
+OrderSchema.index({ userId: 1, orderDate: -1 });
+OrderSchema.index({ orderStatus: 1, orderDate: -1 });
 
 const orderModel = mongoose.model(
   "Order",

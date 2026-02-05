@@ -25,6 +25,8 @@ const DeliveryBoySchema = new mongoose.Schema(
         type:String,
         required:true,
         unique:true,
+        lowercase: true,
+        trim: true,
     },
     password:{
         type:String,
@@ -34,7 +36,8 @@ const DeliveryBoySchema = new mongoose.Schema(
     phone: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
+      trim: true
     },
 
     vehicleNumber: {
@@ -57,9 +60,15 @@ const DeliveryBoySchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: true // 👈 auto creates createdAt & updatedAt
+    timestamps: true, // 👈 auto creates createdAt & updatedAt
+    minimize: false
   }
 );
+
+// Indexes for fast lookups
+DeliveryBoySchema.index({ email: 1 }, { unique: true });
+DeliveryBoySchema.index({ phone: 1 }, { unique: true });
+DeliveryBoySchema.index({ isActive: 1 });
 
 const deliveryModel = mongoose.model(
   "DeliveryBoy",
