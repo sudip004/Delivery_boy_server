@@ -11,7 +11,7 @@ const LocationSchema = new mongoose.Schema(
       
     }
   },
-  { _id: false } // 👈 embedded, no separate _id
+  { _id: false } 
 );
 
 const DeliveryBoySchema = new mongoose.Schema(
@@ -55,25 +55,23 @@ const DeliveryBoySchema = new mongoose.Schema(
       default:{}
     },
     orders: {
-      type: [String],   // could also be ObjectId
+      type: [String],
       default: []
     }
   },
   {
-    timestamps: true, // 👈 auto creates createdAt & updatedAt
+    timestamps: true, 
     minimize: false
   }
 );
 
 // Indexes for fast lookups
-DeliveryBoySchema.index({ email: 1 }, { unique: true });
-DeliveryBoySchema.index({ phone: 1 }, { unique: true });
 DeliveryBoySchema.index({ isActive: 1 });
 
 const deliveryModel = mongoose.model(
   "DeliveryBoy",
   DeliveryBoySchema,
-  "delivery_boys" // 👈 collection name (IMPORTANT)
+  "delivery_boys" 
 );
 
 module.exports={deliveryModel}
