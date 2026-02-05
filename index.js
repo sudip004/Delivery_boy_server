@@ -28,7 +28,9 @@ const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:3000",
     process.env.RIDER_CLIENT_URL,
-    process.env.CLIENT_URL
+    process.env.CLIENT_URL,
+    "https://delivery-boy-foodie.netlify.app",
+    "https://restorafood.netlify.app"
 ].filter(Boolean);
 
 app.use(cors({
